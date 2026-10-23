@@ -1,0 +1,13 @@
+# Directorio de impresoras por oficina (ejemplo).
+# Copiar como oficinas.txt y rellenar con los datos reales. No se sube al repo.
+# Formato:  Oficina | Ubicación | Marca | IP o \\servidor\cola      (usar - si no se sabe)
+#
+# PrintDeploy lo busca en este orden:
+#   1. oficinas.txt junto a PrintDeploy.exe
+#   2. %ProgramData%\PrintDeploy\oficinas.txt
+#   3. oficinas.txt embebido al compilar (si existía junto al .csproj)
+
+Oficina A | Planta 1       | Ricoh | 10.0.1.10
+Oficina A | Planta 2       | Canon | 10.0.1.20
+Oficina B | -              | Ricoh | 10.0.2.10
+Oficina B | General        | -     | \\servidor\IMP_GENERAL

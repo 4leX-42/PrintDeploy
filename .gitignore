@@ -1,0 +1,17 @@
+# Drivers de fabricante: no se redistribuyen (ver Payload/README.md)
+Payload/*.zip
+
+# Directorio real de oficinas: IPs internas, no se publica
+oficinas.txt
+
+# Compilacion
+bin/
+obj/
+
+# Resumen interno con IPs y nombres de oficinas
+RESUMEN.md
+
+# Material de trabajo local
+images/
+*.user
+desktop.ini
