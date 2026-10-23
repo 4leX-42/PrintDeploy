@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <LangVersion>latest</LangVersion>
+    <Nullable>disable</Nullable>
+    <AssemblyName>PrintDeploy</AssemblyName>
+    <RootNamespace>InstaladorImpresoras</RootNamespace>
+    <ApplicationIcon>app.ico</ApplicationIcon>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <Product>PrintDeploy</Product>
+    <Description>PrintDeploy · instalación de impresoras de red con el driver más reciente por marca y modelo</Description>
+    <Version>2.6.0</Version>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <!-- Release sin .pdb: el .exe es lo unico que se distribuye -->
+    <DebugType Condition="'$(Configuration)' == 'Release'">none</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Management" />
+  </ItemGroup>
+
+  <!-- Los drivers y el directorio de oficinas no se publican: se embeben solo si existen
+       al compilar (ver Payload/README.md y oficinas.example.txt). -->
+  <ItemGroup>
+    <EmbeddedResource Include="Payload\canon.zip" LogicalName="canon.zip" Condition="Exists('Payload\canon.zip')" />
+    <EmbeddedResource Include="Payload\ricoh.zip" LogicalName="ricoh.zip" Condition="Exists('Payload\ricoh.zip')" />
+    <EmbeddedResource Include="Payload\ricoh_c4500.zip" LogicalName="ricoh_c4500.zip" Condition="Exists('Payload\ricoh_c4500.zip')" />
+    <EmbeddedResource Include="Payload\ricoh_universal.zip" LogicalName="ricoh_universal.zip" Condition="Exists('Payload\ricoh_universal.zip')" />
+    <EmbeddedResource Include="oficinas.txt" LogicalName="oficinas.txt" Condition="Exists('oficinas.txt')" />
+    <EmbeddedResource Include="engine.ps1" LogicalName="engine.ps1" />
+    <EmbeddedResource Include="Assets\logo.png" LogicalName="logo.png" />
+  </ItemGroup>
+
+</Project>
