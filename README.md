@@ -95,7 +95,8 @@ Sin ellos compila igualmente: el `.exe` avisa del paquete que falta y el directo
 | `Logo.cs` | Emblema de la cabecera (`Assets/logo.png` embebido, escalado y en caché) |
 | `Assets/logo.png`, `app.ico` | Logo: emblema dorado (cabecera) e icono del `.exe` (placa negra) |
 | `Organic.cs` | Ojos de fuego de estado (shader por píxel, caché de fotogramas, llamaradas al azar) |
-| `TentacleLink.cs` | Tentáculo cyberpunk (metal negro, vértebras y núcleo de energía dorados) que une la ventana principal y el escáner, abierto a su derecha (ventana por capas, sin clics) |
+| `FightLink.cs`, `FightArena.cs`, `Fighter.cs`, `FightSound.cs` | Extra oculto y apagado por defecto: el rombo dorado del título del escáner separa las ventanas y monta una pelea al estilo Mortal Kombat en el hueco (Scorpion, Sub-Zero, Mileena, Johnny Cage, Baraka y Kratos; fan art dibujado por código, con escalera de rivales, FINISH HIM y varios fatalities por personaje). Menú de caras: clic izquierdo jugador 1, derecho jugador 2. Otro clic en el rombo lo quita todo y devuelve las ventanas a su sitio |
+| `Payload/fight-audio/` | Audios de la pelea (IMA ADPCM, ~2 MB) incrustados en el `.exe`: voces del locutor y de los personajes, tema y memes. Clips de terceros sacados de myinstants.com; Mortal Kombat y sus voces son de sus dueños. Proyecto personal sin ánimo de lucro |
 | `engine.ps1` | Motor: instala, reinstala y quita colas de cualquier marca; lo lanza el `.exe` |
 
 ## Añadir un modelo Ricoh
