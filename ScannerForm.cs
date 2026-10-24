@@ -122,12 +122,21 @@ namespace InstaladorImpresoras
         [DllImport("user32.dll")] static extern bool ReleaseCapture();
         [DllImport("user32.dll")] static extern IntPtr SendMessage(IntPtr h, int msg, int w, int l);
 
+        public event Action SecretToggle;
+
         void BuildHead()
         {
             head.Dock = DockStyle.Top;
             head.Height = S(58);
             head.BackColor = Theme.Black;
-            head.MouseDown += (s, e) => { if (e.Button == MouseButtons.Left) { ReleaseCapture(); SendMessage(Handle, 0xA1, 2, 0); } };
+            head.MouseDown += (s, e) =>
+            {
+                if (e.Button != MouseButtons.Left) return;
+                // el rombo dorado del titulo es un interruptor escondido (pelea entre ventanas); el resto de la cabecera arrastra
+                var mark = new Rectangle(S(24) - S(5), S(13) - S(3), S(6) + S(10), TextRenderer.MeasureText("A", fTag).Height + S(6));
+                if (mark.Contains(e.Location)) { SecretToggle?.Invoke(); return; }
+                ReleaseCapture(); SendMessage(Handle, 0xA1, 2, 0);
+            };
             head.Paint += (s, e) =>
             {
                 var g = Theme.Crisp(e.Graphics);
