@@ -197,14 +197,15 @@ namespace InstaladorImpresoras
                 try { items = PrinterDirectory.Load(); }
                 catch (Exception ex) { Warn("Error al leer oficinas.txt (el escaneo de red sigue disponible):\n" + ex.Message); items = new List<OfficePrinter>(); }
                 scanner = new ScannerForm(items, InstallFromScan);
-                new TentacleLink(this, scanner);   // se mantiene vivo con los eventos de las dos ventanas
+                var fight = new FightLink(this, scanner);   // apagada; la enciende y la apaga el rombo de la cabecera del escaner
+                scanner.SecretToggle += fight.Toggle;
             }
             if (!scanner.Visible)
             {
                 // a la derecha de la ventana principal, sin taparla; si no cabe, se centra el conjunto en la pantalla
                 // (la principal se desplaza a la izquierda) y, en pantallas estrechas, se solapan lo minimo
                 var area = Screen.FromControl(this).WorkingArea;
-                // hueco para el tentaculo: hasta 150 px, menos si la pantalla no da
+                // hueco para la pelea: hasta 150 px, menos si la pantalla no da
                 int gap = Math.Max(S(40), Math.Min(S(150), area.Width - Width - scanner.Width - S(24)));
                 if (Right + gap + scanner.Width > area.Right && WindowState == FormWindowState.Normal)
                     Left = Math.Max(area.Left, area.Left + (area.Width - (Width + gap + scanner.Width)) / 2);
