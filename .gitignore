@@ -7,6 +7,9 @@ oficinas.txt
 # Compilacion
 bin/
 obj/
+.vs/
+*.suo
+*.log
 
 # Resumen interno con IPs y nombres de oficinas
 RESUMEN.md
