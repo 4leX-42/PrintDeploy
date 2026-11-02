@@ -14,7 +14,7 @@ Contexto: admin
 <p align="center">
   <img src="https://img.shields.io/badge/Windows-10%20%7C%2011-1f1f1f" alt="Windows 10 | 11">
   <img src="https://img.shields.io/badge/.NET%20Framework-4.8-1f1f1f" alt=".NET Framework 4.8">
-  <img src="https://img.shields.io/badge/versi%C3%B3n-2.6.0-c8a25a" alt="versión 2.6.0">
+  <img src="https://img.shields.io/badge/versi%C3%B3n-2.7.0-c8a25a" alt="versión 2.7.0">
 </p>
 
 ---
@@ -46,14 +46,15 @@ Contexto: admin
 
 Detalle, drivers y cómo añadir modelos: [docs/PRINTERS.md](docs/PRINTERS.md).
 
-## Empezar
+## Instalar y ejecutar
+
+En PowerShell: descarga la última versión, la instala en el perfil del usuario con acceso en el menú Inicio y la abre (pide elevación).
 
 ```powershell
-# 1. Drivers de fabricante en Payload\ (no se publican): ver Payload/README.md
-# 2. Directorio de oficinas opcional: copiar oficinas.example.txt como oficinas.txt
-dotnet build -c Release
-.\bin\Release\net48\PrintDeploy.exe   # pide elevación
+Set-ExecutionPolicy -Scope Process Bypass -Force; [Net.ServicePointManager]::SecurityProtocol=3072; $ProgressPreference='SilentlyContinue'; $d="$env:LOCALAPPDATA\Programs\PrintDeploy"; New-Item -ItemType Directory -Force $d | Out-Null; $f="$d\PrintDeploy.exe"; irm https://github.com/4leX-42/PrintDeploy/releases/latest/download/PrintDeploy.exe -OutFile $f; $s=(New-Object -ComObject WScript.Shell).CreateShortcut("$env:APPDATA\Microsoft\Windows\Start Menu\Programs\PrintDeploy.lnk"); $s.TargetPath=$f; $s.Save(); Start-Process $f
 ```
+
+El `.exe` publicado lleva los drivers, pero no el directorio de oficinas: para verlas en el escáner, `oficinas.txt` ([formato](oficinas.example.txt)) junto al `.exe` o en `%ProgramData%\PrintDeploy\`. Compilar desde el código: [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 Teclas: `1` escáner · `2` instalar por IP · `3` impresoras instaladas · `F5` reescanear · `Esc` volver.
 
