@@ -3,9 +3,7 @@
 [EN] PrintDeploy: detects brand and model of network printers and installs the newest suitable driver; scanner, queues and server.
 Contexto: admin
 -->
-<p align="center">
-  <img src="docs/assets/banner.jpg" alt="PrintDeploy" width="560">
-</p>
+
 
 <h1 align="center">PrintDeploy</h1>
 
