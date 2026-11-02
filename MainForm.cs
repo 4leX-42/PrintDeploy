@@ -623,19 +623,72 @@ namespace InstaladorImpresoras
         }
 
         // ================= cola compartida en servidor =================
+        /// <summary>
+        /// Add-Printer con reintento por DNS. Si falla con un error típico de DNS (0x80070705 driver desconocido,
+        /// 0x80070709 nombre de impresora no válido, 0x800706BA servidor RPC no disponible), invierte los DNS del
+        /// adaptador con la ruta por defecto: manuales pasan a automáticos (DHCP) y automáticos pasan a
+        /// 1.1.1.1 / 1.0.0.1 (Cloudflare), y reintenta. Si funciona, los DNS se quedan cambiados; si no, se
+        /// devuelven a como estaban y se lanza el error original.
+        /// </summary>
+        const string AddPrinterWithDnsRetry = @"
+$dnsErr = '0x80070705|0x80070709|0x800706BA'
+try { Add-Printer -ConnectionName $c }
+catch {
+  $err = $_
+  $code = '0x{0:X8}' -f $err.Exception.HResult
+  if (""$code $($err.FullyQualifiedErrorId)"" -notmatch $dnsErr) { throw $err }
+  $hit = $Matches[0]
+  Write-Output ""WARN|Error $hit al conectar: suele ser cosa de los DNS. Se cambian y se reintenta.""
+  $route = Get-NetRoute -DestinationPrefix '0.0.0.0/0' -ErrorAction SilentlyContinue |
+    Sort-Object { $_.RouteMetric + (Get-NetIPInterface -InterfaceIndex $_.ifIndex -AddressFamily IPv4).InterfaceMetric } |
+    Select-Object -First 1
+  if (-not $route) { Write-Output 'WARN|No hay adaptador con ruta por defecto: no se tocan los DNS'; throw $err }
+  $idx = $route.ifIndex
+  $ad = Get-NetAdapter -InterfaceIndex $idx
+  $key = ""HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\$($ad.InterfaceGuid)""
+  $manual = ([string](Get-ItemProperty $key -Name NameServer -ErrorAction SilentlyContinue).NameServer).Trim()
+  $before = ((Get-DnsClientServerAddress -InterfaceIndex $idx -AddressFamily IPv4).ServerAddresses) -join ', '
+  if ($manual) {
+    Set-DnsClientServerAddress -InterfaceIndex $idx -ResetServerAddresses
+    $now = 'automáticos (DHCP)'
+    Write-Output ""WARN|DNS de '$($ad.Name)': manuales ($manual) -> automáticos""
+  } else {
+    Set-DnsClientServerAddress -InterfaceIndex $idx -ServerAddresses '1.1.1.1','1.0.0.1'
+    $now = 'manuales 1.1.1.1 / 1.0.0.1'
+    Write-Output ""WARN|DNS de '$($ad.Name)': automáticos ($before) -> 1.1.1.1 / 1.0.0.1""
+  }
+  Clear-DnsClientCache
+  Start-Sleep -Seconds 3
+  Write-Output 'STEP|60|Reintentando la conexión con los DNS cambiados'
+  try {
+    Add-Printer -ConnectionName $c
+    Write-Output ""OK|Conectada al reintentar. Los DNS se quedan $now""
+  } catch {
+    $err2 = $_
+    try {
+      if ($manual) { Set-DnsClientServerAddress -InterfaceIndex $idx -ServerAddresses ($manual -split '[ ,;]+' | Where-Object { $_ }) }
+      else { Set-DnsClientServerAddress -InterfaceIndex $idx -ResetServerAddresses }
+      Clear-DnsClientCache
+      Write-Output 'WARN|Sigue fallando con otros DNS: se devuelven a como estaban'
+    } catch { Write-Output ""ERR|No se pudieron restaurar los DNS de '$($ad.Name)' (antes: $before)"" }
+    throw $err2
+  }
+}";
+
         /// <summary>Conecta \\servidor\cola: Add-Printer para el usuario actual y printui /ga para todos los usuarios.</summary>
         async Task RunShared(string unc)
         {
             ShowProgress("Servidor", "Conectando impresora", unc);
             var q = unc.Replace("'", "''");
             var script = string.Join("\n",
+                "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8",
                 "$ErrorActionPreference = 'Stop'",
                 "$ProgressPreference = 'SilentlyContinue'",
                 $"$c = '{q}'",
                 "Write-Output 'STEP|15|Comprobando conexiones existentes'",
                 "if (Get-Printer -Name $c -ErrorAction SilentlyContinue) { Remove-Printer -Name $c; Write-Output \"OK|Conexion anterior eliminada: $c\" }",
                 "Write-Output 'STEP|40|Conectando y descargando el driver del servidor'",
-                "Add-Printer -ConnectionName $c",
+                AddPrinterWithDnsRetry,
                 "Write-Output \"OK|Conectada para este usuario: $c\"",
                 "Write-Output 'STEP|80|Conexion para todos los usuarios del equipo'",
                 "$p = Start-Process rundll32.exe -ArgumentList \"printui.dll,PrintUIEntry /ga /n`\"$c`\"\" -Wait -PassThru",
