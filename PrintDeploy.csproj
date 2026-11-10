@@ -12,7 +12,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Product>PrintDeploy</Product>
     <Description>PrintDeploy · instalación de impresoras de red con el driver más reciente por marca y modelo</Description>
-    <Version>2.7.1</Version>
+    <Version>2.8.0</Version>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <!-- Release sin .pdb: el .exe es lo unico que se distribuye -->
     <DebugType Condition="'$(Configuration)' == 'Release'">none</DebugType>
@@ -25,16 +25,38 @@
   </ItemGroup>
 
   <!-- Los drivers y el directorio de oficinas no se publican: se embeben solo si existen
-       al compilar (ver Payload/README.md y oficinas.example.txt). -->
-  <ItemGroup>
+       al compilar (ver Payload/README.md y oficinas.example.txt).
+       -p:EmbedPayload=false = compilación portable: .exe pequeño y los zip en Payload\ junto a él. -->
+  <ItemGroup Condition="'$(EmbedPayload)' != 'false'">
     <EmbeddedResource Include="Payload\canon.zip" LogicalName="canon.zip" Condition="Exists('Payload\canon.zip')" />
     <EmbeddedResource Include="Payload\ricoh.zip" LogicalName="ricoh.zip" Condition="Exists('Payload\ricoh.zip')" />
     <EmbeddedResource Include="Payload\ricoh_c4500.zip" LogicalName="ricoh_c4500.zip" Condition="Exists('Payload\ricoh_c4500.zip')" />
     <EmbeddedResource Include="Payload\ricoh_universal.zip" LogicalName="ricoh_universal.zip" Condition="Exists('Payload\ricoh_universal.zip')" />
+  </ItemGroup>
+  <ItemGroup>
     <EmbeddedResource Include="oficinas.txt" LogicalName="oficinas.txt" Condition="Exists('oficinas.txt')" />
     <EmbeddedResource Include="Payload\fight-audio\*.wav" LogicalName="fight-audio/%(Filename).wav" />
     <EmbeddedResource Include="engine.ps1" LogicalName="engine.ps1" />
     <EmbeddedResource Include="Assets\logo.png" LogicalName="logo.png" />
   </ItemGroup>
+
+  <!-- Huella SHA-256 de cada zip, fijada dentro del .exe: un zip de Payload\ externo solo se usa si coincide. -->
+  <Target Name="PayloadManifest" BeforeTargets="BeforeBuild">
+    <ItemGroup>
+      <PayloadZip Include="Payload\*.zip" />
+    </ItemGroup>
+    <GetFileHash Files="@(PayloadZip)" Algorithm="SHA256" HashEncoding="hex">
+      <Output TaskParameter="Items" ItemName="PayloadHashed" />
+    </GetFileHash>
+    <WriteLinesToFile File="$(IntermediateOutputPath)payload.sha256" Lines="@(PayloadHashed->'%(FileHash)  %(Filename)%(Extension)')" Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <ItemGroup>
+      <EmbeddedResource Include="$(IntermediateOutputPath)payload.sha256" LogicalName="payload.sha256" Condition="Exists('$(IntermediateOutputPath)payload.sha256')" />
+    </ItemGroup>
+  </Target>
+
+  <!-- Compilación portable: los zip van a Payload\ junto al .exe. -->
+  <Target Name="CopyPayloadPortable" AfterTargets="Build" Condition="'$(EmbedPayload)' == 'false'">
+    <Copy SourceFiles="@(PayloadZip)" DestinationFolder="$(OutDir)Payload" SkipUnchangedFiles="true" />
+  </Target>
 
 </Project>

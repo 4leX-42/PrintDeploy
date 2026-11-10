@@ -112,7 +112,7 @@ namespace InstaladorImpresoras
         // ---------- version de los paquetes embebidos ----------
         static readonly Dictionary<string, Version> packageCache = new Dictionary<string, Version>();
 
-        /// <summary>DriverVer del INF dentro del zip embebido; null si el .exe no lleva ese paquete.</summary>
+        /// <summary>DriverVer del INF dentro del zip (embebido o en Payload\ junto al .exe); null si no hay ese paquete.</summary>
         public static Version PackageVersion(string resource, string inf)
         {
             var key = resource + "|" + inf;
@@ -122,7 +122,7 @@ namespace InstaladorImpresoras
                 Version v = null;
                 try
                 {
-                    using (var s = typeof(DriverCatalog).Assembly.GetManifestResourceStream(resource))
+                    using (var s = PayloadStore.OpenForRead(resource))
                         if (s != null)
                             using (var zip = new ZipArchive(s, ZipArchiveMode.Read))
                             {

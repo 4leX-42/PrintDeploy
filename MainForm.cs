@@ -543,8 +543,9 @@ namespace InstaladorImpresoras
         }
 
         /// <summary>
-        /// Paquete de driver embebido, descomprimido en la carpeta de trabajo protegida: directamente desde el .exe
-        /// (sin copiar antes el zip a disco) y una sola vez por sesion (lo recuerda en memoria, no en disco).
+        /// Paquete de driver (embebido, o el de Payload\ junto al .exe con la huella comprobada, ver PayloadStore),
+        /// descomprimido en la carpeta de trabajo protegida: directamente desde su origen (sin copiar antes el zip)
+        /// y una sola vez por sesion (lo recuerda en memoria, no en disco).
         /// </summary>
         string ExtractPayload(string resource, string folder)
         {
@@ -552,11 +553,8 @@ namespace InstaladorImpresoras
             SecureWorkDir();
             var dest = Path.Combine(workDir, folder);
             if (Directory.Exists(dest)) Directory.Delete(dest, true);
-            using (var s = typeof(MainForm).Assembly.GetManifestResourceStream(resource))
-            {
-                if (s == null) throw new FileNotFoundException($"Esta compilación no incluye el paquete de driver '{resource}'. Colóquelo en Payload\\ y vuelva a compilar (ver Payload\\README.md).");
-                using (var zip = new ZipArchive(s, ZipArchiveMode.Read)) zip.ExtractToDirectory(dest);
-            }
+            using (var s = PayloadStore.OpenVerified(resource))
+            using (var zip = new ZipArchive(s, ZipArchiveMode.Read)) zip.ExtractToDirectory(dest);
             lock (extracted) extracted[resource] = dest;
             return dest;
         }

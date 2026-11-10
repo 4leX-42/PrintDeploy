@@ -10,8 +10,22 @@
 ## Compilar
 
 ```powershell
-dotnet build -c Release            # -> bin\Release\net48\PrintDeploy.exe
+dotnet build -c Release                                           # completo -> bin\Release\net48\PrintDeploy.exe
+dotnet build -c Release -p:EmbedPayload=false -o bin\portable     # portable -> bin\portable\PrintDeploy.exe + Payload\
 ```
+
+| Variante | Qué sale | Cuándo |
+|---|---|---|
+| Completa | Un único `.exe` de unos 180 MB con los drivers dentro | Un solo fichero que copiar |
+| Portable | `.exe` de unos 2,6 MB y los zip en `Payload\` junto a él; se distribuye la carpeta entera | Arranque rápido: el antivirus y el control de cuentas no tienen que leer 180 MB, y desde USB o carpeta de red solo se lee el driver que se instala |
+
+Medido en el mismo equipo, primer arranque de un fichero nuevo: 779 ms la completa, 118 ms la portable
+(los siguientes, unos 90 ms las dos).
+
+El `.exe` lleva dentro la huella SHA-256 de cada zip que había en `Payload\` al compilar (recurso
+`payload.sha256`, objetivo `PayloadManifest` del `.csproj`). La portable solo usa un zip externo si su
+huella coincide, porque su contenido se instala elevado: **el `.exe` y su carpeta `Payload\` tienen que
+salir de la misma compilación**. Cambiar un zip obliga a recompilar.
 
 Antes de compilar, lo que no está en git:
 
@@ -19,8 +33,6 @@ Antes de compilar, lo que no está en git:
 |---|---|---|
 | Paquetes de driver | `Payload\*.zip` ([Payload/README.md](../Payload/README.md)) | Compila; el `.exe` avisa al intentar usar el paquete |
 | Directorio de oficinas | `oficinas.txt` ([formato](../oficinas.example.txt)) | Compila; el escáner muestra solo la red local, o lee `oficinas.txt` junto al `.exe` |
-
-Con todos los paquetes el `.exe` pesa unos 170 MB.
 
 **Si PrintDeploy está abierto, el `.exe` está bloqueado**: compilar con `-o <otra carpeta>` o cerrar la app
 antes.

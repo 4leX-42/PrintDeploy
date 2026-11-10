@@ -14,7 +14,7 @@ Contexto: admin
 <p align="center">
   <img src="https://img.shields.io/badge/Windows-10%20%7C%2011-1f1f1f" alt="Windows 10 | 11">
   <img src="https://img.shields.io/badge/.NET%20Framework-4.8-1f1f1f" alt=".NET Framework 4.8">
-  <img src="https://img.shields.io/badge/versi%C3%B3n-2.7.1-c8a25a" alt="versión 2.7.1">
+  <img src="https://img.shields.io/badge/versi%C3%B3n-2.8.0-c8a25a" alt="versión 2.8.0">
 </p>
 
 ---
@@ -32,7 +32,7 @@ Contexto: admin
 - **Colas de servidor** (`\\servidor\cola`): conexión para el usuario y para todo el equipo, con credenciales del servidor si hacen falta y reintento con otros DNS si falla por resolución de nombres.
 - **Impresoras instaladas**: estado de cada cola, reinstalación con el driver óptimo conservando su configuración, y desinstalación limpia (cola, puerto y driver huérfano).
 - **Página de prueba** con confirmación en la propia impresora por SNMP (contador de páginas o aviso de sin papel, atasco...).
-- **Portátil**: un único `.exe` elevado, con drivers y directorio embebidos; funciona desde USB o carpeta de red.
+- **Portátil**: un único `.exe` elevado, con drivers y directorio embebidos; funciona desde USB o carpeta de red. Al compilar se puede elegir la variante portable de arranque rápido: `.exe` de 2,6 MB con los drivers en una carpeta `Payload\` al lado ([docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)).
 
 ## Compatibilidad
 
