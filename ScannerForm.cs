@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
@@ -360,7 +360,7 @@ namespace InstaladorImpresoras
             if (rangeCts != null) { rangeCts.Cancel(); return; }
             List<string> ips;
             try { ips = NetworkScan.ParseRange(fRange.Box.Text); }
-            catch (FormatException ex) { ThemedDialog.Info(this, "Scanner", "Rango no válido", ex.Message + "\n\nEjemplos: 192.168.4.1-254 · 192.168.4.0/24 · 192.168.4.10-192.168.4.80"); return; }
+            catch (FormatException ex) { ThemedDialog.Info(this, "Scanner", "Rango no válido", ex.Message + "\n\nEjemplos: 10.0.1.1-254 · 10.0.1.0/24 · 10.0.1.10-10.0.1.80"); return; }
 
             string group = ScanList.RangePrefix + fRange.Box.Text.Trim();
             list.Items.RemoveAll(x => x.Group == group);
