@@ -19,6 +19,7 @@ por el `.exe`.
 | `DriverCatalog.cs` | Marca por texto (`BrandOf`) y driver óptimo (`Resolve` → `DriverPlan`) |
 | `RicohModels.cs` | Modelos Ricoh con driver propio y el universal de reserva |
 | `PrinterDirectory.cs` | Lectura de `oficinas.txt` |
+| `PayloadStore.cs` | Origen de los paquetes de driver: embebido o `Payload\` junto al `.exe`, este con la huella SHA-256 comprobada antes de instalar |
 | `engine.ps1` | Motor: crea, reinstala y quita colas, puertos y drivers |
 | `Theme.cs`, `ThemedDialog.cs`, `Organic.cs`, `NmapEye.cs`, `Logo.cs`, `PrinterMenu.cs` | Estilo, escala, diálogos, indicadores animados, logo y menú de impresoras |
 | `FightLink.cs`, `FightArena.cs`, `Fighter.cs`, `FightSound.cs`, `Payload/fight-audio/` | Extra oculto, apagado por defecto (clic en el rombo del título del escáner). No interviene en la instalación |
@@ -30,7 +31,7 @@ Escáner / Instalar por IP
   └─ PrinterProbe + NetworkScan → marca, modelo, descripción
        └─ DriverCatalog.Resolve(marca, descripción) → DriverPlan
             └─ MainForm.RunJobs(List<InstallJob>)
-                 ├─ ExtractPayload: zip embebido → %ProgramData%\PrintDeploy\Work\{GUID}\
+                 ├─ ExtractPayload: zip (embebido o Payload\ verificado) → %ProgramData%\PrintDeploy\Work\{GUID}\
                  ├─ copia engine.ps1 embebido a esa carpeta
                  └─ RunEngine: powershell -File engine.ps1 -JobsB64 <trabajos>
                       └─ salida por líneas STEP|OK|WARN|ERR|LOG|SUMMARY → HandleEngineLine → registro y progreso
@@ -58,7 +59,7 @@ si falla. Al quitar, borra el puerto y el driver solo si ninguna otra cola los u
 | Qué | Dónde | Cuándo se lee |
 |---|---|---|
 | Directorio de oficinas | `oficinas.txt` junto al `.exe` → `%ProgramData%\PrintDeploy\oficinas.txt` → embebido al compilar | Al abrir el escáner |
-| Paquetes de driver | `Payload\*.zip`, embebidos si existen al compilar | Al instalar |
+| Paquetes de driver | `Payload\*.zip`: embebidos si existen al compilar o, en la compilación portable (`-p:EmbedPayload=false`), en `Payload\` junto al `.exe` con la huella fijada al compilar | La versión, al arrancar (sin verificar); el contenido, al instalar (verificado) |
 | Modelos Ricoh | `RicohModels.All` y `RicohModels.Universal` | En `DriverCatalog.Resolve` |
 | Driver Canon, marcas | Constantes y `Brands` en `DriverCatalog.cs` | En `DriverCatalog.Resolve` |
 | Escala de interfaz | Variable de entorno `PRINTDEPLOY_SCALE` (p. ej. `1.5`) | Al arrancar |

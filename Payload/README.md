@@ -2,6 +2,8 @@
 
 Los drivers de Canon y Ricoh **no se incluyen en el repositorio**. Descárguelos de la web oficial del fabricante, compruebe la firma digital y colóquelos aquí con estos nombres antes de compilar. Cada zip que falte simplemente no se embebe; PrintDeploy avisa si se intenta usar.
 
+En la compilación portable (`-p:EmbedPayload=false`) los zip no van dentro del `.exe`: se copian a `Payload\` junto a él y solo se usan si su huella SHA-256 es la que se fijó al compilar. Detalle en [docs/DEVELOPMENT.md](../docs/DEVELOPMENT.md).
+
 | Fichero | Contenido | Origen oficial |
 |---|---|---|
 | `ricoh.zip` | carpeta `disk1\` del **PCL 6 Driver** de IM C4510 (INF `disk1\oemsetup.inf`, driver `RICOH IM C4510 PCL 6`) | support.ricoh.com → IM C4510/C5510/C6010 → Windows 11 64-bit → PCL 6 Driver |
