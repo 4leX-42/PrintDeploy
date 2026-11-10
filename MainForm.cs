@@ -624,30 +624,43 @@ namespace InstaladorImpresoras
 
         // ================= cola compartida en servidor =================
         /// <summary>
-        /// Add-Printer con reintento por DNS. Si falla con un error típico de DNS (0x80070705 driver desconocido,
-        /// 0x80070709 nombre de impresora no válido, 0x800706BA servidor RPC no disponible), invierte los DNS del
-        /// adaptador con la ruta por defecto: manuales pasan a automáticos (DHCP) y automáticos pasan a
-        /// 1.1.1.1 / 1.0.0.1 (Cloudflare), y reintenta. Si funciona, los DNS se quedan cambiados; si no, se
-        /// devuelven a como estaban y se lanza el error original.
+        /// Add-Printer con reintento por DNS. Si falla con un error típico de DNS (0x80070709 nombre de impresora
+        /// no válido, 0x800706BA servidor RPC no disponible), invierte los DNS del adaptador con la ruta por
+        /// defecto: manuales pasan a automáticos (DHCP) y automáticos pasan a 1.1.1.1 / 1.0.0.1 (Cloudflare), y
+        /// reintenta. Si funciona, los DNS se quedan cambiados; si no, se devuelven a como estaban y se lanza el
+        /// error original. 0x80070705 (driver desconocido) solo se reintenta si los DNS eran manuales (se pasan
+        /// a DHCP): con DNS automáticos el servidor ya respondió y lo que falla es la entrega del driver, así
+        /// que se explica y no se tocan los DNS.
         /// </summary>
         const string AddPrinterWithDnsRetry = @"
 $dnsErr = '0x80070705|0x80070709|0x800706BA'
+$srv = $c.TrimStart('\').Split('\')[0]
+$drv1 = ""ERR|El servidor $srv no entrega un driver instalable para esta cola (0x80070705, driver desconocido).""
+$drv2 = ""ERR|Comprobar que \\$srv\print`$ se abre desde este equipo y que la cola tiene en el servidor un driver x64 firmado. Alternativa: instalar antes el driver en este equipo (instalación por IP) y repetir.""
 try { Add-Printer -ConnectionName $c }
 catch {
   $err = $_
   $code = '0x{0:X8}' -f $err.Exception.HResult
   if (""$code $($err.FullyQualifiedErrorId)"" -notmatch $dnsErr) { throw $err }
   $hit = $Matches[0]
-  Write-Output ""WARN|Error $hit al conectar: suele ser cosa de los DNS. Se cambian y se reintenta.""
   $route = Get-NetRoute -DestinationPrefix '0.0.0.0/0' -ErrorAction SilentlyContinue |
     Sort-Object { $_.RouteMetric + (Get-NetIPInterface -InterfaceIndex $_.ifIndex -AddressFamily IPv4).InterfaceMetric } |
     Select-Object -First 1
-  if (-not $route) { Write-Output 'WARN|No hay adaptador con ruta por defecto: no se tocan los DNS'; throw $err }
+  if (-not $route) {
+    if ($hit -eq '0x80070705') { Write-Output $drv1; Write-Output $drv2 }
+    Write-Output 'WARN|No hay adaptador con ruta por defecto: no se tocan los DNS'; throw $err
+  }
   $idx = $route.ifIndex
   $ad = Get-NetAdapter -InterfaceIndex $idx
   $key = ""HKLM:\SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\Interfaces\$($ad.InterfaceGuid)""
   $manual = ([string](Get-ItemProperty $key -Name NameServer -ErrorAction SilentlyContinue).NameServer).Trim()
   $before = ((Get-DnsClientServerAddress -InterfaceIndex $idx -AddressFamily IPv4).ServerAddresses) -join ', '
+  if ($hit -eq '0x80070705' -and -not $manual) {
+    Write-Output $drv1; Write-Output $drv2
+    Write-Output ""WARN|Los DNS ya son automáticos ($before): no es un problema de DNS y no se tocan""
+    throw $err
+  }
+  Write-Output ""WARN|Error $hit al conectar: suele ser cosa de los DNS. Se cambian y se reintenta.""
   if ($manual) {
     Set-DnsClientServerAddress -InterfaceIndex $idx -ResetServerAddresses
     $now = 'automáticos (DHCP)'
@@ -671,6 +684,7 @@ catch {
       Clear-DnsClientCache
       Write-Output 'WARN|Sigue fallando con otros DNS: se devuelven a como estaban'
     } catch { Write-Output ""ERR|No se pudieron restaurar los DNS de '$($ad.Name)' (antes: $before)"" }
+    if (('0x{0:X8}' -f $err2.Exception.HResult) -eq '0x80070705') { Write-Output $drv1; Write-Output $drv2 }
     throw $err2
   }
 }";
