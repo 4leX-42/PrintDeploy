@@ -12,7 +12,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Product>PrintDeploy</Product>
     <Description>PrintDeploy · instalación de impresoras de red con el driver más reciente por marca y modelo</Description>
-    <Version>2.8.0</Version>
+    <Version>2.9.0</Version>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <!-- Release sin .pdb: el .exe es lo unico que se distribuye -->
     <DebugType Condition="'$(Configuration)' == 'Release'">none</DebugType>

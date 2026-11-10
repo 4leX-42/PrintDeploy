@@ -687,11 +687,47 @@ catch {
   }
 }";
 
-        /// <summary>Conecta \\servidor\cola: Add-Printer para el usuario actual y printui /ga para todos los usuarios.</summary>
+        /// <summary>
+        /// ARM64: el servidor solo reparte drivers x64 (Add-Printer -ConnectionName da 0x80070705). Se crea una cola
+        /// local con el driver de clase PCL6 de Windows (nativo ARM64) en un puerto local que apunta a \\servidor\cola:
+        /// el trabajo sale en PCL6 y lo recibe la cola del servidor como cualquier otro, con el usuario de Windows.
+        /// </summary>
+        const string SharedViaLocalPort = @"
+$srv, $queue = $c.TrimStart('\').Split('\')[0, 1]
+$n = ""$queue en $srv""
+Write-Output 'LOG|ARM64: el servidor solo tiene drivers x64. Se crea una cola local con el driver de clase PCL6 de Windows que imprime en la del servidor.'
+if (Get-Printer -Name $n -ErrorAction SilentlyContinue) { Remove-Printer -Name $n; Write-Output ""OK|Cola local anterior eliminada: $n"" }
+if (-not (Get-PrinterDriver -Name 'Microsoft PCL6 Class Driver' -ErrorAction SilentlyContinue)) { Add-PrinterDriver -Name 'Microsoft PCL6 Class Driver' }
+if (-not (Get-PrinterPort -Name $c -ErrorAction SilentlyContinue)) { Add-PrinterPort -Name $c; Write-Output ""OK|Puerto local creado: $c"" }
+Add-Printer -Name $n -DriverName 'Microsoft PCL6 Class Driver' -PortName $c
+Write-Output ""OK|Cola local creada para todos los usuarios: $n (driver de clase PCL6, sin bandejas ni acabados de la marca)""
+Write-Output ""SUMMARY|$n -> $c""
+Write-Output 'STEP|100|Finalizado'";
+
+        /// <summary>
+        /// Conecta \\servidor\cola: Add-Printer para el usuario actual y printui /ga para todos los usuarios.
+        /// En ARM64, cola local por puerto local (SharedViaLocalPort).
+        /// </summary>
         async Task RunShared(string unc)
         {
             ShowProgress("Servidor", "Conectando impresora", unc);
             var q = unc.Replace("'", "''");
+            if (Platform.IsArm64)
+            {
+                var armScript = string.Join("\n",
+                    "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8",
+                    "$ErrorActionPreference = 'Stop'",
+                    "$ProgressPreference = 'SilentlyContinue'",
+                    $"$c = '{q}'",
+                    "Write-Output 'STEP|40|Creando la cola local hacia el servidor'",
+                    SharedViaLocalPort);
+                int armExit = await Task.Run(() => RunEngine($"-NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand {Convert.ToBase64String(Encoding.Unicode.GetBytes(armScript))}"));
+                var parts = unc.TrimStart('\\').Split('\\');
+                var local = parts.Length > 1 ? $"{parts[1]} en {parts[0]}" : unc;
+                installedPrinter = armExit == 0 && await Task.Run(() => PrinterExists(local)) ? local : null;
+                Finish(armExit == 0, armExit == 0 ? $"La impresora aparece como \"{local}\"." : null);
+                return;
+            }
             var script = string.Join("\n",
                 "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8",
                 "$ErrorActionPreference = 'Stop'",
@@ -717,6 +753,12 @@ catch {
         async Task RunCanon()
         {
             ShowProgress("Canon", "Generic Plus PCL6", "Siga los pasos del asistente de Canon.");
+            if (Platform.IsArm64)
+            {
+                Log("ERR", "Este equipo es ARM64 y el asistente de Canon solo instala drivers x64. Usar Instalar normal: pone el driver de clase PCL6 de Windows.");
+                Finish(false, null);
+                return;
+            }
             bool ok = false;
             int code = -1;
             try
