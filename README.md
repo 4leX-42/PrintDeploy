@@ -32,7 +32,7 @@ Contexto: admin
 - **Colas de servidor** (`\\servidor\cola`): conexión para el usuario y para todo el equipo, con credenciales del servidor si hacen falta y reintento con otros DNS si falla por resolución de nombres.
 - **Impresoras instaladas**: estado de cada cola, reinstalación con el driver óptimo conservando su configuración, y desinstalación limpia (cola, puerto y driver huérfano).
 - **Página de prueba** con confirmación en la propia impresora por SNMP (contador de páginas o aviso de sin papel, atasco...).
-- **Portátil**: un único `.exe` elevado, con drivers y directorio embebidos; funciona desde USB o carpeta de red. Al compilar se puede elegir la variante portable de arranque rápido: `.exe` de 2,6 MB con los drivers en una carpeta `Payload\` al lado ([docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)).
+- **Portátil**: `.exe` elevado de 2,6 MB con los drivers en una carpeta `Payload\` al lado, sin instalación; funciona desde USB o carpeta de red. También se puede compilar como un único `.exe` con todo dentro ([docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)).
 
 ## Compatibilidad
 
@@ -48,13 +48,13 @@ Detalle, drivers y cómo añadir modelos: [docs/PRINTERS.md](docs/PRINTERS.md).
 
 ## Instalar y ejecutar
 
-En PowerShell: descarga la última versión, la instala en el perfil del usuario con acceso en el menú Inicio y la abre (pide elevación).
+En PowerShell: descarga la última versión portable, la descomprime en el perfil del usuario con acceso en el menú Inicio y la abre (pide elevación). Repetirlo actualiza sin borrar un `oficinas.txt` que haya en esa carpeta.
 
 ```powershell
-Set-ExecutionPolicy -Scope Process Bypass -Force; [Net.ServicePointManager]::SecurityProtocol=3072; $ProgressPreference='SilentlyContinue'; $d="$env:LOCALAPPDATA\Programs\PrintDeploy"; New-Item -ItemType Directory -Force $d | Out-Null; $f="$d\PrintDeploy.exe"; irm https://github.com/4leX-42/PrintDeploy/releases/latest/download/PrintDeploy.exe -OutFile $f; $s=(New-Object -ComObject WScript.Shell).CreateShortcut("$env:APPDATA\Microsoft\Windows\Start Menu\Programs\PrintDeploy.lnk"); $s.TargetPath=$f; $s.Save(); Start-Process $f
+Set-ExecutionPolicy -Scope Process Bypass -Force; [Net.ServicePointManager]::SecurityProtocol=3072; $ProgressPreference='SilentlyContinue'; $d="$env:LOCALAPPDATA\Programs\PrintDeploy"; $z="$env:TEMP\PrintDeploy-portable.zip"; irm https://github.com/4leX-42/PrintDeploy/releases/latest/download/PrintDeploy-portable.zip -OutFile $z; Expand-Archive $z $d -Force; Remove-Item $z; $f="$d\PrintDeploy.exe"; $s=(New-Object -ComObject WScript.Shell).CreateShortcut("$env:APPDATA\Microsoft\Windows\Start Menu\Programs\PrintDeploy.lnk"); $s.TargetPath=$f; $s.Save(); Start-Process $f
 ```
 
-El `.exe` publicado lleva los drivers, pero no el directorio de oficinas: para verlas en el escáner, `oficinas.txt` ([formato](oficinas.example.txt)) junto al `.exe` o en `%ProgramData%\PrintDeploy\`. Compilar desde el código: [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
+La release es la compilación portable: `PrintDeploy.exe` y la carpeta `Payload\` con los drivers, que tienen que ir juntos (el `.exe` comprueba la huella de cada paquete). No lleva el directorio de oficinas: para verlas en el escáner, `oficinas.txt` ([formato](oficinas.example.txt)) junto al `.exe` o en `%ProgramData%\PrintDeploy\`. Compilar desde el código: [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md).
 
 Teclas: `1` escáner · `2` instalar por IP · `3` impresoras instaladas · `F5` reescanear · `Esc` volver.
 
