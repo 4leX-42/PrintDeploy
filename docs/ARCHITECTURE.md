@@ -39,9 +39,10 @@ Escáner / Instalar por IP
 - **Trabajos** (`InstallJob`, `MainForm.Pages.cs`): `N` cola nueva en una IP, `E` reinstalar cola
   existente, `R` quitar. Si la IP ya tiene cola, `N` se convierte en reinstalar esa (no duplica).
 - **Colas de servidor** no pasan por `engine.ps1`: `RunShared` genera un script con `Add-Printer
-  -ConnectionName` (usuario actual) y `printui /ga` (todos los usuarios). Si falla con `0x80070705`,
-  `0x80070709` o `0x800706BA`, invierte los DNS del adaptador con la ruta por defecto y reintenta
-  (constante `AddPrinterWithDnsRetry`).
+  -ConnectionName` (usuario actual) y `printui /ga` (todos los usuarios). Si falla con `0x80070709`
+  o `0x800706BA`, invierte los DNS del adaptador con la ruta por defecto y reintenta (constante
+  `AddPrinterWithDnsRetry`). Con `0x80070705` (driver desconocido) solo reintenta si los DNS eran
+  manuales; con DNS automáticos no los toca y explica que el servidor no entrega el driver.
 - **Canon con asistente**: `RunCanon` lanza el `Setup.exe` oficial del paquete en un proceso aparte.
 
 ## Motor (`engine.ps1`)
