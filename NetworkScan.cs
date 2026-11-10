@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -387,7 +387,7 @@ namespace InstaladorImpresoras
         // ---------- rangos ----------
         public const int MaxHosts = 1024;
 
-        /// <summary>Acepta "192.168.4.0/24", "192.168.4.1-254", "192.168.4.10-192.168.4.80" o una IP suelta.</summary>
+        /// <summary>Acepta "10.0.1.0/24", "10.0.1.1-254", "10.0.1.10-10.0.1.80" o una IP suelta.</summary>
         public static List<string> ParseRange(string text)
         {
             text = (text ?? "").Trim();
