@@ -27,9 +27,13 @@ $ProgressPreference = 'SilentlyContinue'
 function Out-Line($kind, $text) { [Console]::Out.WriteLine("$kind|$text"); [Console]::Out.Flush() }
 function Step($pct, $text) { Out-Line 'STEP' "$pct|$text" }
 
+# Activa SNMP en un puerto TCP/IP existente. Devuelve $true solo si ha cambiado algo: entonces hay que
+# reiniciar el spooler para que lo lea. Los puertos nuevos ya nacen con SNMP (Get-IpPort) y no lo necesitan.
 function Enable-PortSnmp($portName) {
     $key = "HKLM:\SYSTEM\CurrentControlSet\Control\Print\Monitors\Standard TCP/IP Port\Ports\$portName"
     if (-not (Test-Path $key)) { return $false }
+    $cur = Get-ItemProperty $key
+    if ($cur.'SNMP Enabled' -eq 1 -and $cur.'SNMP Index' -eq 1 -and $cur.'SNMP Community' -eq 'public') { return $false }
     Set-ItemProperty $key -Name 'SNMP Enabled' -Value 1 -Type DWord
     Set-ItemProperty $key -Name 'SNMP Index' -Value 1 -Type DWord
     Set-ItemProperty $key -Name 'SNMP Community' -Value 'public'
@@ -41,7 +45,8 @@ function Get-IpPort($ip) {
     $p = Get-PrinterPort | Where-Object { $_.PrinterHostAddress -eq $ip } | Select-Object -First 1
     if ($p) { return $p.Name }
     $name = "IP_$ip"
-    Add-PrinterPort -Name $name -PrinterHostAddress $ip
+    # con SNMP desde el principio (comunidad public, índice 1): sin reiniciar el spooler después
+    Add-PrinterPort -Name $name -PrinterHostAddress $ip -SNMP 1 -SNMPCommunity 'public'
     Out-Line 'OK' "Puerto creado: $name"
     $name
 }

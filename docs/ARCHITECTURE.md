@@ -55,8 +55,9 @@ Escáner / Instalar por IP
 ## Motor (`engine.ps1`)
 
 Entrada `-JobsB64`: base64 (UTF-8) de líneas separadas por tabulador, documentadas en la cabecera del
-script. Reutiliza el puerto TCP/IP que ya apunte a la IP (`Get-IpPort`), activa SNMP en el puerto
-(`Enable-PortSnmp`, comunidad `public`), comprueba cada cola tras crearla (`Test-Queue`) y deshace lo creado
+script. Reutiliza el puerto TCP/IP que ya apunte a la IP (`Get-IpPort`), crea los puertos nuevos con SNMP
+activo (comunidad `public`, índice 1) y en los existentes lo activa `Enable-PortSnmp`; el spooler solo se
+reinicia si este cambió algún puerto, comprueba cada cola tras crearla (`Test-Queue`) y deshace lo creado
 si falla. Al quitar, borra el puerto y el driver solo si ninguna otra cola los usa (`Remove-UnusedPort`,
 `Remove-UnusedDriver`). **No se ejecuta a mano**: depende de las rutas de INF que le pasa el `.exe`.
 
