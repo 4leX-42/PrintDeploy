@@ -19,6 +19,7 @@ por el `.exe`.
 | `DriverCatalog.cs` | Marca por texto (`BrandOf`) y driver óptimo (`Resolve` → `DriverPlan`) |
 | `RicohModels.cs` | Modelos Ricoh con driver propio y el universal de reserva |
 | `PrinterDirectory.cs` | Lectura de `oficinas.txt` |
+| `Platform.cs` | `IsArm64`: máquina nativa con `IsWow64Process2` (el `.exe` corre emulado como x64 en ARM64). `PRINTDEPLOY_ARCH=ARM64` lo fuerza en pruebas |
 | `PayloadStore.cs` | Origen de los paquetes de driver: embebido o `Payload\` junto al `.exe`, este con la huella SHA-256 comprobada antes de instalar |
 | `engine.ps1` | Motor: crea, reinstala y quita colas, puertos y drivers |
 | `Theme.cs`, `ThemedDialog.cs`, `Organic.cs`, `NmapEye.cs`, `Logo.cs`, `PrinterMenu.cs` | Estilo, escala, diálogos, indicadores animados, logo y menú de impresoras |
@@ -45,6 +46,11 @@ Escáner / Instalar por IP
   `AddPrinterWithDnsRetry`). Con `0x80070705` (driver desconocido) solo reintenta si los DNS eran
   manuales; con DNS automáticos no los toca y explica que el servidor no entrega el driver.
 - **Canon con asistente**: `RunCanon` lanza el `Setup.exe` oficial del paquete en un proceso aparte.
+- **ARM64** (`Platform.IsArm64`): los paquetes embebidos son solo x64, así que `DriverCatalog.Newest` los
+  ignora y queda el instalado o el `Microsoft PCL6 Class Driver`. Las colas de servidor no usan
+  `-ConnectionName` (el servidor solo reparte drivers x64): `SharedViaLocalPort` crea la cola local
+  «cola en servidor» con el driver de clase y un puerto local `\\servidor\cola`. El asistente de Canon
+  no se lanza.
 
 ## Motor (`engine.ps1`)
 

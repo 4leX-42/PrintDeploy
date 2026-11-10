@@ -179,7 +179,9 @@ namespace InstaladorImpresoras
             return new DriverPlan
             {
                 Brand = brand, DriverName = ClassDriver, Version = cls, Source = "Windows", Generic = true,
-                Note = "genérico: imprime, sin bandejas ni acabados de la marca",
+                Note = Platform.IsArm64 && (brand == "Ricoh" || brand == "Canon")
+                    ? "ARM64: los drivers de la marca son solo x64; imprime, sin bandejas ni acabados de la marca"
+                    : "genérico: imprime, sin bandejas ni acabados de la marca",
             };
         }
 
@@ -191,7 +193,8 @@ namespace InstaladorImpresoras
         {
             var have = installed.Where(kv => exact ? kv.Key.Equals(name, StringComparison.OrdinalIgnoreCase) : kv.Key.StartsWith(name, StringComparison.OrdinalIgnoreCase))
                                 .OrderByDescending(kv => kv.Value).FirstOrDefault();
-            var pkg = resource != null ? PackageVersion(resource, inf) : null;
+            // los paquetes embebidos son solo x64 (NTamd64): en ARM64 no se pueden instalar
+            var pkg = resource != null && !Platform.IsArm64 ? PackageVersion(resource, inf) : null;
             if (have.Key != null && (pkg == null || have.Value >= pkg))
                 return new DriverPlan { Brand = brand, DriverName = have.Key, Version = have.Value, Source = "instalado", Note = pkg != null && have.Value > pkg ? $"más nuevo que el paquete (v{pkg})" : "" };
             if (pkg != null)
