@@ -162,9 +162,11 @@ namespace InstaladorImpresoras
             {
                 r.State = ScanState.NotPrinter;
                 bool denied = r.Denied = error == 5 || error == 1326;
-                r.Model = denied ? $"sin permiso · {error}" : error == 1801 ? "cola inexistente" : $"error {error}";
+                bool rpc = TransientRpc(error);
+                r.Model = denied ? $"sin permiso · {error}" : error == 1801 ? "cola inexistente" : rpc ? $"servidor sin respuesta · {error}" : $"error {error}";
                 r.Hint = denied ? $"{host} rechaza el usuario actual. Credenciales: usuario con permiso en el servidor."
                        : error == 1801 ? $"Cola inexistente en {host} (error 1801)."
+                       : rpc ? $"{host} no contestó a la consulta de la cola tras 3 intentos (RPC, error {error}). Suele ser momentáneo: volver a escanear; si sigue, revisar la red (Wi-Fi, VPN) o el servicio de impresión del servidor."
                        : $"No se pudo abrir la cola en {host} (error {error}).";
                 return r;
             }
@@ -283,10 +285,21 @@ namespace InstaladorImpresoras
             }
         }
 
+        /// <summary>Fallos de RPC que suelen ser momentáneos (servidor lento, Wi-Fi o VPN): se reintentan.</summary>
+        static bool TransientRpc(int error) => error == 1722 || error == 1726 || error == 1727 || error == 1717;
+
         static (string driver, uint status, string location, string comment, string port)? SharedQueueInfo(string unc, out int error)
         {
             error = 0;
-            if (!OpenPrinter(unc, out var h, IntPtr.Zero)) { error = Marshal.GetLastWin32Error(); return null; }
+            IntPtr h = IntPtr.Zero;
+            for (int attempt = 0; attempt < 3; attempt++)
+            {
+                if (attempt > 0) System.Threading.Thread.Sleep(700 * attempt);
+                if (OpenPrinter(unc, out h, IntPtr.Zero)) { error = 0; break; }
+                error = Marshal.GetLastWin32Error();
+                if (!TransientRpc(error)) break;
+            }
+            if (error != 0) return null;
             try
             {
                 GetPrinter(h, 2, IntPtr.Zero, 0, out int needed);
