@@ -17,3 +17,4 @@ Primero, el registro: botón **Ver registro** al terminar, o `%ProgramData%\Prin
 | Canon no responde al escáner por SNMP | Solo admite SNMP v1 | Automático: `PrinterProbe` reintenta con v1 y lo recuerda por IP |
 | Texto del registro con caracteres rotos (`operaci?n`) | Codificación de la salida de PowerShell | Corregido para colas de servidor en el script de `RunShared` (salida UTF-8) |
 | La compilación falla con el `.exe` en uso | PrintDeploy abierto | Cerrarlo o compilar con `-o <otra carpeta>` |
+| Escáner: cola de servidor con «error 1726» o «servidor sin respuesta» | Fallo momentáneo de RPC (Remote Procedure Call): el servidor tarda en contestar o la red (Wi-Fi, VPN) corta la llamada a medias | Automático: el escáner reintenta 3 veces. Si sigue, volver a escanear; si persiste, revisar la red o el servicio de impresión del servidor |

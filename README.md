@@ -14,7 +14,7 @@ Contexto: admin
 <p align="center">
   <img src="https://img.shields.io/badge/Windows-10%20%7C%2011-1f1f1f" alt="Windows 10 | 11">
   <img src="https://img.shields.io/badge/.NET%20Framework-4.8-1f1f1f" alt=".NET Framework 4.8">
-  <img src="https://img.shields.io/badge/versi%C3%B3n-2.9.1-c8a25a" alt="versión 2.9.1">
+  <img src="https://img.shields.io/badge/versi%C3%B3n-2.9.2-c8a25a" alt="versión 2.9.2">
 </p>
 
 ---
